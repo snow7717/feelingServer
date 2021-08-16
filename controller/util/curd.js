@@ -1,9 +1,9 @@
 const jsonwebtoken = require('jsonwebtoken')
 
-async function index(model,query,ctx,populateField = '') {
+async function index(model,query,ctx,populateField = '',populates = [],populateField1 = '',populates1 = []) {
 	let {page,limit,...filterQuery} = query
 	let total = await model.find(filterQuery).countDocuments().exec()
-	await model.find(filterQuery).skip((query.page - 1) * parseInt(query.limit)).limit(parseInt(query.limit)).sort({'updated_at': -1}).populate(populateField).then((data) => {
+	await model.find(filterQuery).skip((query.page - 1) * parseInt(query.limit)).limit(parseInt(query.limit)).sort({'updated_at': -1}).populate(populateField,populates).populate(populateField1,populates1).then((data) => {
 		ctx.body = {
 			success: true,
 			message: '查询成功',

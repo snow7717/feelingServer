@@ -10,12 +10,16 @@ module.exports = new Schema({
 	password: {
 		type: String
 	},
+	motto: {
+		type: String,
+		default: '我想要一个好心情'
+	},
 	created_at: {
 		type: Date,
-		default: Date()
+		default: Date.now
 	},
 	updated_at: {
 		type: Date,
-		default: Date()
+		default: Date.now
 	}
 })

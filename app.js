@@ -20,6 +20,8 @@ const user = require('./routes/user')
 const article = require('./routes/article')
 const comment = require('./routes/comment')
 const message = require('./routes/message')
+const friendreq = require('./routes/friendreq')
+const friend = require('./routes/friend')
 
 // error handler
 onerror(app)
@@ -60,6 +62,7 @@ app.use(koajwt({
 		/^\/admins\/login/,
 		/^\/user\/register/,
 		/^\/user\/login/,
+		/^\/user\/show/,
 		/^\/article/,
 		/^\/comment/,
 	]
@@ -91,6 +94,8 @@ app.use(user.routes(), user.allowedMethods())
 app.use(article.routes(), article.allowedMethods())
 app.use(comment.routes(), comment.allowedMethods())
 app.use(message.routes(), message.allowedMethods())
+app.use(friendreq.routes(), friendreq.allowedMethods())
+app.use(friend.routes(), friend.allowedMethods())
 
 // 文件上传
 app.use(koaBody({

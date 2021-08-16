@@ -4,32 +4,49 @@ const IO = require('koa-socket')
 const io = new IO()
 const msocket = require('../models/socket')
 const message = require('../models/message')
+const friendreq = require('../models/friendreq')
 
 io.attach(app)
 app._io.on('connection', socket => {
-	console.log('客户端建立连接')
 	socket.on('disconnect', () => {
 		console.log("客户端已经断开连接")
 	})
 })
 io.on('login', async (receive) => {
-	await msocket.create({socket: receive.socket.id, user: receive.data.user}).then((data) => {
-	}).catch(err => {
-		console.error(err)
+	if(receive.data.user) {
+		await msocket.create({socket: receive.socket.id, user: receive.data.user}).then((data) => {
+		}).catch(err => {
+			console.error(err)
+		})
+	}
+})
+io.on('friendreq', async (receive) => {
+	await friendreq.create(receive.data).then(async (data) => {
+		let count = await friendreq.find({to: receive.data.to, status: '待验证'}).countDocuments().exec()
+		await msocket.find({user: receive.data.to}).then((data1) => {
+			for(let item of data1) {
+				if (app._io.sockets.connected[item.socket]) {
+					console.log('发送成功')
+					app._io.sockets.connected[item.socket].emit('friendreq',{count: count})
+				}
+			}
+		})
 	})
 })
 io.on('message', async (receive) => {
-	await message.create(receive.data).then((data) => {
+	await message.create(receive.data).then(async (data) => {
+		if(data) {
+			let unread = await message.find({to: receive.data.to,read: false}).countDocuments().exec()
+			await msocket.find({user: receive.data.to}).then((data1) => {
+				for(let item of data1) {
+					if (app._io.sockets.connected[item.socket]) {
+						app._io.sockets.connected[item.socket].emit('message',{from: receive.data.from, to: receive.data.to, unread: unread, content: receive.data.content,read: false,deletes: []})
+					}
+				}
+			})
+		}
 	}).catch(err => {
 		console.log(err)
-	})
-	let unread = await message.find({to: receive.data.to,read: false}).countDocuments().exec()
-	await msocket.find({user: receive.data.to}).then((data) => {
-		for(let item of data) {
-			if (app._io.sockets.connected[item.socket]) {
-				app._io.sockets.connected[item.socket].emit('message',{unread: unread, content: receive.data.content})
-			}
-		}
 	})
 })
 io.on('remove', async (receive) => {

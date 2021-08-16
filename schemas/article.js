@@ -18,10 +18,10 @@ module.exports = new Schema({
 	},
 	created_at: {
 		type: Date,
-		default: Date()
+		default: Date.now
 	},
 	updated_at: {
 		type: Date,
-		default: Date()
+		default: Date.now
 	}
 })

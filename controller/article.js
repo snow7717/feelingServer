@@ -4,8 +4,7 @@ const article = require('../models/article')
 const curd = require('./util/curd.js')
 
 async function index(ctx, next) {
-	let query = {title: {$regex: ctx.request.query.title}, page: ctx.request.query.page, limit: ctx.request.query.limit}
-  
+	let match = ctx.request.query.author == '' ? {title: {$regex: ctx.request.query.title}} : {title: {$regex: ctx.request.query.title}, author: {$eq: ObjectId(ctx.request.query.author)}}
   let docs = await article.aggregate([ 
 		{
 			$lookup: {
@@ -16,15 +15,13 @@ async function index(ctx, next) {
 			},
 		},
 		{ 
-			$match: {
-			  title: {$regex: ctx.request.query.title}
-		  }
+			$match: match
 		},
 		{
-			$skip: (query.page - 1) * parseInt(query.limit)
+			$skip: (ctx.request.query.page - 1) * parseInt(ctx.request.query.limit)
 		},
 		{
-			$limit: parseInt(query.limit)
+			$limit: parseInt(ctx.request.query.limit)
 		},
 		{
 			$sort: {'updated_at': -1}

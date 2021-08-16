@@ -1,6 +1,8 @@
 const jsonwebtoken = require('jsonwebtoken')
 const user = require('../models/user')
 const message = require('../models/message')
+const article = require('../models/article')
+const friendreq = require('../models/friendreq')
 const curd = require('./util/curd.js')
 
 async function register(ctx, next) {
@@ -50,17 +52,38 @@ async function login(ctx,next) {
 				name: data.name
 			}, 'xshusnow', { expiresIn: 3600 * 24 })
 			let unread = await message.find({to: data._id,read: false}).countDocuments().exec()
+			let count = await friendreq.find({to: data._id, status: '待验证'}).countDocuments().exec()
 			ctx.body = {
 				success: true,
 				message: '登录成功',
 				data: data,
 				unread: unread,
+				count: count,
 				token: token
 			}
 		} else {
 			ctx.body = {
 				success: false,
 				message: '用户名或密码输入错误'
+			}
+		}
+	})
+}
+
+async function show(ctx, next) {
+	let count = await article.find({author: ctx.request.query._id}).countDocuments().exec()
+	await user.findOne({_id: ctx.request.query._id},{name: 1, avatar: 1, created_at: 1}).then((data) => {
+		if(data) {
+			ctx.body = {
+				success: true,
+				message: '查询成功',
+				data: data,
+				count: count
+			}
+		}else{
+			ctx.body = {
+				success: false,
+				message: '查询失败'
 			}
 		}
 	})
@@ -105,5 +128,6 @@ async function update(ctx, next) {
 module.exports = {
 	register,
 	login,
+	show,
 	update
 }
