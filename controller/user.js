@@ -3,6 +3,7 @@ const user = require('../models/user')
 const message = require('../models/message')
 const article = require('../models/article')
 const friendreq = require('../models/friendreq')
+const mtoken = require('../models/token')
 const curd = require('./util/curd.js')
 
 async function register(ctx, next) {
@@ -51,6 +52,14 @@ async function login(ctx,next) {
 				_id: data._id,
 				name: data.name
 			}, 'xshusnow', { expiresIn: 3600 * 24 })
+			await mtoken.find({user: data._id}).then(async (data1) => {
+				if(data1.length > 0) {
+					await mtoken.updateMany({user: data._id},{token: token})
+				}else{
+					await mtoken.create({user: data._id, token: token})
+				}
+			})
+			
 			let unread = await message.find({to: data._id,read: false}).countDocuments().exec()
 			let count = await friendreq.find({to: data._id, status: '待验证'}).countDocuments().exec()
 			ctx.body = {
@@ -68,6 +77,11 @@ async function login(ctx,next) {
 			}
 		}
 	})
+}
+
+async function index(ctx, next) {
+	let query = {name: {$regex: ctx.request.query.name}}
+	await curd.index(user,query,ctx)
 }
 
 async function show(ctx, next) {
@@ -128,6 +142,7 @@ async function update(ctx, next) {
 module.exports = {
 	register,
 	login,
+	index,
 	show,
 	update
 }

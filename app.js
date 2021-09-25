@@ -7,11 +7,13 @@ const bodyparser = require('koa-bodyparser')
 const parameter = require('koa-parameter')
 const logger = require('koa-logger')
 const mongo = require('./database')()
+const Redis = require('ioredis')
 const cors = require('koa2-cors')
 const koajwt = require('koa-jwt')
 const koaBody = require('koa-body')
 const path = require('path')
 const socket = require('./socket')
+const token = require('./controller/token')
 
 const index = require('./routes/index')
 const file = require('./routes/file')
@@ -55,6 +57,31 @@ app.use(async (ctx, next) => {
   })
 })
 
+app.use(async (ctx, next) => {
+	let exempts = [
+		'/admins/login',
+		'/user\/register',
+		'/user\/login',
+		'/user\/show',
+		'/article',
+		'/comment'
+	]
+	if(exempts.indexOf(ctx.path) == -1) {
+		let data = await token.verify(ctx, next)
+		if(data.length > 0) {
+			await next()
+		}else{
+			ctx.body = {
+				code: 422,
+				success: false,
+				message: '您的账号在别的地方登录,您已被迫下线'
+			}
+		}
+	}else{
+		await next()
+	}
+})
+
 app.use(koajwt({
 	secret: 'xshusnow',
 }).unless({
@@ -63,8 +90,9 @@ app.use(koajwt({
 		/^\/user\/register/,
 		/^\/user\/login/,
 		/^\/user\/show/,
+		/^\/user/,
 		/^\/article/,
-		/^\/comment/,
+		/^\/comment/
 	]
 }))
 

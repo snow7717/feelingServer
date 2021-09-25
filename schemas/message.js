@@ -11,6 +11,7 @@ module.exports = new Schema({
     ref: 'users'
 	},
 	content: String,
+	type: String,
 	read: {
 		type: Boolean,
 		default: false

@@ -1,5 +1,6 @@
 const jsonwebtoken = require('jsonwebtoken')
 const admin = require('../models/admin')
+const mtoken = require('../models/token')
 const curd = require('./util/curd.js')
 
 async function login(ctx, next) {
@@ -14,12 +15,19 @@ async function login(ctx, next) {
 		}
 	})
 	
-	await admin.findOne(ctx.request.body).then((data) => {
+	await admin.findOne(ctx.request.body).then(async (data) => {
 		if(data) {
 			let token = jsonwebtoken.sign({
 				_id: data._id,
 				name: data.name
 			}, 'xshusnow', { expiresIn: 3600 * 24 })
+			await mtoken.find({user: data._id}).then(async (data1) => {
+				if(data1.length > 0) {
+					await mtoken.updateMany({user: data._id},{token: token})
+				}else{
+					await mtoken.create({user: data._id, token: token})
+				}
+			})
 			ctx.body = {
 				success: true,
 				message: '登录成功',

@@ -85,13 +85,15 @@ async function delchat(ctx, next) {
 				deletes: [ctx.request.body.to]
 			}
 			let updatequery = {
-				$or: [
+				/*$or: [
 				  {from: data._id, to: ctx.request.body.to},
 				  {from: ctx.request.body.to, to: data._id},
-			  ],
+			  ],*/
 				$or: [
-					{deletes: []},
-					{deletes: [ctx.request.body.to]}
+					{from: data._id, to: ctx.request.body.to,deletes: []},
+					{from: data._id, to: ctx.request.body.to,deletes: [ctx.request.body.to]},
+					{from: ctx.request.body.to, to: data._id,deletes: []},
+					{from: ctx.request.body.to, to: data._id,deletes: [ctx.request.body.to]},
 				]
 			}
 			let updatequery1 = {
